@@ -1,3 +1,40 @@
+# Building picolibc
+
+- Clone picolibc.
+- Run the build_script_microkit.sh script, the default install location for the build is ${HOME}/picolibc_build this can be changed by modifying the path after the -Dprefix flag.
+- The build options for picolibc can be found at https://github.com/sel4-cap/picolibc/blob/main/doc/build.md.
+
+# Linking with microkit
+
+- Add the specs file to the compiler flags --specs=&lt;Path to specs file&gt;. This will set the system header file path. Specs file found at ./picolib-microkit/picolibc.specs.
+- Add the libc libraries to the linker flags, including libgcc. Libc libraries found at the default install location (libc.a, libm.a). Libgcc library is found in the compiler's files (libgcc.a).
+- Libgcc needs to be listed before and after listing the libc libraries because they are dependent on each other. For example: -lgcc -L&lt;{HOME}/picolibc_build/picolibc/aarch64-linux-gnu/lib/&gt; -lc -lm -lgcc. 
+- The standard input/output functions need to be configured to work with picolibc therefore the code below needs to be included in the microkit build:
+
+```c
+#include <microkit.h>
+
+/* Setup for getting picolibc to compile */
+static int
+libc_microkit_putc(char c, FILE *file)
+{
+    (void) file; /* Not used by us */
+    microkit_dbg_putc(c);
+    return c;
+}
+
+static int
+sample_getc(FILE *file)
+{
+	return -1; /* getc not implemented, return EOF */
+}
+
+static FILE __stdio = FDEV_SETUP_STREAM(libc_microkit_putc,
+                    sample_getc,
+                    NULL,
+                    _FDEV_SETUP_WRITE);
+FILE *const stdin = &__stdio; __strong_reference(stdin, stdout); __strong_reference(stdin, stderr);
+```
 # Picolibc
 Copyright © 2018-2023 Keith Packard
 
