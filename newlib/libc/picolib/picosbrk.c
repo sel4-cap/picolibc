@@ -48,8 +48,8 @@ static bool ONCE = false;
 void *sbrk(ptrdiff_t incr)
 {
         if (!ONCE) {
-                printf("heap start %p, end %p\n", __heap_start, __heap_end);
                 ONCE = true;
+                /* printf("heap start %p, end %p\n", __heap_start, __heap_end); */
                 brk = __heap_start;
         }
 	if (incr < 0) {
@@ -60,7 +60,7 @@ void *sbrk(ptrdiff_t incr)
 	} else {
                 if ((size_t) (__heap_end - brk) < (size_t) incr) {
                         errno = ENOMEM;
-			return (void *) -1;
+                        return (void *) -1;
                 }
 	}
 	void *ret = brk;
